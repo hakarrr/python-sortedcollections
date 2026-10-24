@@ -88,3 +88,73 @@ def test_update():
     for index, letter in enumerate(alphabet):
         pair = {index: letter}
         temp.update(pair)
+
+
+@pytest.mark.parametrize('via_list', [False, True])
+def test_deepcopy_recursive_value(via_list):
+    mapping = ItemSortedDict(lambda key, value: key)
+    mapping['self'] = [mapping] if via_list else mapping
+    clone = copy.deepcopy(mapping)
+    assert clone is not mapping
+    assert clone._func is mapping._func
+    assert (clone['self'][0] if via_list else clone['self']) is clone
+    clone._check()
+    clone['other'] = 1
+    clone._check()
+    assert 'other' not in mapping
+
+
+def test_deepcopy_shared_values_and_outer_memo():
+    shared = []
+    mapping = ItemSortedDict(lambda key, value: key, a=shared, b=shared)
+    clone, copied_shared, repeated_clone = copy.deepcopy(
+        [mapping, shared, mapping]
+    )
+    assert clone is repeated_clone
+    assert clone['a'] is clone['b'] is copied_shared
+    assert copied_shared is not shared
+    clone['a'].append(1)
+    assert shared == []
+    clone._check()
+
+
+def test_deepcopy_recursive_key():
+    class Key:
+        pass
+
+    key = Key()
+    mapping = ItemSortedDict(lambda key, value: 0)
+    key.mapping = mapping
+    mapping[key] = key
+    clone = copy.deepcopy(mapping)
+    copied_key = next(iter(clone))
+    assert copied_key is not key
+    assert copied_key.mapping is clone
+    assert clone[copied_key] is copied_key
+    clone._check()
+
+
+def test_deepcopy_empty_subclass():
+    class Subclass(ItemSortedDict):
+        pass
+
+    mapping = Subclass(lambda key, value: key)
+    clone = copy.deepcopy(mapping)
+    assert type(clone) is Subclass
+    assert clone._func is mapping._func
+    assert not clone
+    clone['new'] = 1
+    clone._check()
+    assert not mapping
+
+
+def test_deepcopy_mutually_recursive_mappings():
+    first = ItemSortedDict(lambda key, value: key)
+    second = ItemSortedDict(lambda key, value: key)
+    first['second'] = second
+    second['first'] = first
+    clone = copy.deepcopy(first)
+    assert clone['second'] is not second
+    assert clone['second']['first'] is clone
+    clone._check()
+    clone['second']._check()
