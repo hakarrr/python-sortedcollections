@@ -285,6 +285,16 @@ class SegmentList(SortedKeyList):
         "Return 0."
         return 0
 
+    def copy(self):
+        """Return a shallow copy of the list."""
+        return self.__class__(self)
+
+    __copy__ = copy
+
+    def __reduce__(self):
+        """Support for pickling serialization."""
+        return self.__class__, (list(self),)
+
     def __setitem__(self, index, value):
         if isinstance(index, slice):
             raise NotImplementedError
