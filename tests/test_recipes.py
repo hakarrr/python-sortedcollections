@@ -58,3 +58,43 @@ def test_segment_list_setitem_slice():
     sl = SegmentList()
     with pytest.raises(NotImplementedError):
         sl[:] = [0]
+
+
+@pytest.mark.parametrize('size', [0, 1, 7, 2100])
+def test_segment_list_extend_self(size):
+    values = list(range(size))
+    mapping = SegmentList(values)
+    append = mapping.append
+
+    def bounded_append(value):
+        # Make a regression fail rather than growing the list indefinitely.
+        assert len(mapping) < 2 * size
+        append(value)
+
+    mapping.append = bounded_append
+    result = mapping.extend(mapping)
+    assert result is None
+    assert list(mapping) == values + values
+    mapping._check()
+
+
+@pytest.mark.parametrize('size', [0, 1, 7, 2100])
+def test_segment_list_extend_other(size):
+    values = list(range(size))
+    mapping = SegmentList(values)
+    other = SegmentList(values)
+    result = mapping.extend(other)
+    assert result is None
+    assert list(mapping) == values + values
+    assert list(other) == values
+    mapping._check()
+    other._check()
+
+
+def test_segment_list_extend_generator():
+    mapping = SegmentList([1, 2])
+    value = []
+    mapping.extend(item for item in [value, value])
+    assert list(mapping) == [1, 2, value, value]
+    assert mapping[2] is mapping[3] is value
+    mapping._check()
