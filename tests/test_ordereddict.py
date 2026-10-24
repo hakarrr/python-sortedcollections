@@ -164,3 +164,47 @@ def test_equality():
     assert od != {}
     assert od != OrderedDict()
     od._check()
+
+
+@pytest.mark.parametrize(
+    'keys',
+    [
+        [float('nan')],
+        [float('nan'), 'ordinary'],
+        ['ordinary', float('nan')],
+    ],
+)
+def test_equality_shared_nonreflexive_keys(keys):
+    from collections import OrderedDict as StandardOrderedDict
+
+    items = [(key, i) for i, key in enumerate(keys)]
+    original = OrderedDict(items)
+    duplicate = original.copy()
+    standard = StandardOrderedDict(items)
+    assert (original == original) == (standard == standard)
+    assert (original == duplicate) == (standard == standard.copy())
+    assert not (original != original)
+    assert not (original != duplicate)
+    assert original == dict(items)
+    original._check()
+    duplicate._check()
+
+
+def test_equality_distinct_nan_keys():
+    assert OrderedDict([(float('nan'), 1)]) != OrderedDict([(float('nan'), 1)])
+
+
+def test_equality_key_order_and_values():
+    first = OrderedDict([('a', 1), ('b', 2)])
+    assert first != OrderedDict([('b', 2), ('a', 1)])
+    assert OrderedDict([('a', 1)]) != OrderedDict([('a', 2)])
+
+
+def test_check_shared_nonreflexive_key():
+    key = float('nan')
+    mapping = OrderedDict([(key, 1)])
+    mapping._check()
+    assert mapping[key] == 1
+    del mapping[key]
+    mapping._check()
+    assert not mapping
