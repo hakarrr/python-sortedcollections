@@ -88,8 +88,10 @@ class NearestDict(SortedDict):
             return key_list[index - 1]
         if key_list[index] == request:
             return key_list[index]
-        if index == 0 and self.rounding == self.NEAREST_PREV:
-            raise KeyError(f'No key below {request!r} found')
+        if index == 0:
+            if self.rounding == self.NEAREST_PREV:
+                raise KeyError(f'No key below {request!r} found')
+            return key_list[0]
         if self.rounding == self.NEAREST_PREV:
             return key_list[index - 1]
         if self.rounding == self.NEAREST_NEXT:
