@@ -105,6 +105,10 @@ class ItemSortedDict(SortedDict):
         items = (deepcopy(item, memo) for item in self.items())
         return self.__class__(self._func, items)
 
+    def __reduce__(self):
+        """Support for pickling serialization."""
+        return self.__class__, (self._func, list(self.items()))
+
 
 class ValueSortedDict(SortedDict):
     """Sorted dictionary that maintains (key, value) item pairs sorted by value.
