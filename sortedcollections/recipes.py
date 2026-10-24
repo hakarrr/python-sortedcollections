@@ -25,6 +25,8 @@ class IndexableDict(SortedDict):
     """
 
     def __init__(self, *args, **kwargs):
+        if args and args[0] is hash:
+            args = args[1:]
         super().__init__(hash, *args, **kwargs)
 
 
@@ -43,6 +45,8 @@ class IndexableSet(SortedSet):
 
     # pylint: disable=too-many-ancestors
     def __init__(self, *args, **kwargs):
+        if kwargs.get('key') is hash:
+            kwargs.pop('key')
         super().__init__(*args, key=hash, **kwargs)
 
     def __reduce__(self):
