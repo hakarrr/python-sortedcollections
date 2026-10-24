@@ -102,8 +102,10 @@ class ItemSortedDict(SortedDict):
     __copy__ = copy
 
     def __deepcopy__(self, memo):
-        items = (deepcopy(item, memo) for item in self.items())
-        return self.__class__(self._func, items)
+        result = self.__class__(self._func)
+        memo[id(self)] = result
+        result.update(deepcopy(item, memo) for item in self.items())
+        return result
 
 
 class ValueSortedDict(SortedDict):
