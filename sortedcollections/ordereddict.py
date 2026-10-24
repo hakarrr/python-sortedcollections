@@ -3,7 +3,6 @@
 """
 
 from itertools import count
-from operator import eq
 
 from sortedcontainers import SortedDict
 from sortedcontainers.sortedlist import recursive_repr
@@ -190,7 +189,7 @@ class OrderedDict(dict):
     def __eq__(self, other):
         "Test self and other mapping for equality."
         if isinstance(other, OrderedDict):
-            return dict.__eq__(self, other) and all(map(eq, self, other))
+            return dict.__eq__(self, other) and list(self) == list(other)
         return dict.__eq__(self, other)
 
     __ne__ = abc.MutableMapping.__ne__
@@ -202,6 +201,6 @@ class OrderedDict(dict):
         nums = self._nums
 
         for key, value in keys.items():
-            assert nums[value] == key
+            assert nums[value] is key or nums[value] == key
 
         nums._check()
