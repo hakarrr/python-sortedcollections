@@ -164,3 +164,55 @@ def test_equality():
     assert od != {}
     assert od != OrderedDict()
     od._check()
+
+
+@pytest.mark.parametrize(
+    'args,kwargs',
+    [
+        ((), {}),
+        (({},), {}),
+        (({'b': 3, 'c': 4},), {}),
+        (([('b', 3), ('c', 4)],), {}),
+        ((), {'b': 3, 'c': 4}),
+        (({'b': 3},), {'c': 4}),
+    ],
+)
+def test_reinitialize_preserves_existing_keys(args, kwargs):
+    from collections import OrderedDict as StandardOrderedDict
+
+    original = [('a', 1), ('b', 2)]
+    mapping = OrderedDict(original)
+    expected = StandardOrderedDict(original)
+    mapping.__init__(*args, **kwargs)
+    expected.__init__(*args, **kwargs)
+    assert len(mapping) == len(expected)
+    assert list(mapping.items()) == list(expected.items())
+    assert list(reversed(mapping)) == list(reversed(expected))
+    assert mapping.keys()[0] == 'a'
+    mapping._check()
+
+    del mapping['a']
+    del expected['a']
+    mapping['d'] = 5
+    expected['d'] = 5
+    assert list(mapping.items()) == list(expected.items())
+    mapping._check()
+
+
+def test_reinitialize_from_self():
+    mapping = OrderedDict([('a', 1), ('b', 2)])
+    mapping.__init__(mapping)
+    assert list(mapping.items()) == [('a', 1), ('b', 2)]
+    mapping._check()
+
+
+def test_reinitialize_after_deletions_and_clear():
+    mapping = OrderedDict([('a', 1), ('b', 2)])
+    del mapping['a']
+    mapping.__init__([('c', 3)])
+    assert list(mapping.items()) == [('b', 2), ('c', 3)]
+    mapping._check()
+    mapping.clear()
+    mapping.__init__([('d', 4)])
+    assert list(mapping.items()) == [('d', 4)]
+    mapping._check()
