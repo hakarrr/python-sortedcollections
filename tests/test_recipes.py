@@ -98,3 +98,52 @@ def test_segment_list_extend_generator():
     assert list(mapping) == [1, 2, value, value]
     assert mapping[2] is mapping[3] is value
     mapping._check()
+
+
+@pytest.mark.parametrize(
+    'size, extra',
+    [(0, 0), (0, 3), (3, 1), (10, 1), (100, 2), (2100, 2), (2100, 800)],
+)
+def test_segment_list_iadd(size, extra):
+    values = list(range(size))
+    mapping = SegmentList(values)
+    original = mapping
+    mapping += range(extra)
+    assert mapping is original
+    assert list(mapping) == values + list(range(extra))
+    mapping._check()
+
+
+@pytest.mark.parametrize('size', [0, 1, 7, 2100])
+def test_segment_list_iadd_self(size):
+    values = list(range(size))
+    mapping = SegmentList(values)
+    original = mapping
+    mapping += mapping
+    assert mapping is original
+    assert list(mapping) == values + values
+    mapping._check()
+
+
+def test_segment_list_iadd_iterator_failure():
+    mapping = SegmentList([1, 2])
+
+    def failing():
+        yield 3
+        raise RuntimeError('iteration failed')
+
+    with pytest.raises(RuntimeError, match='iteration failed'):
+        mapping += failing()
+    assert list(mapping) == [1, 2]
+    mapping._check()
+
+
+def test_segment_list_iadd_generator_aliases():
+    value = []
+    mapping = SegmentList(range(10))
+    original = mapping
+    mapping += (item for item in [value, value])
+    assert mapping is original
+    assert list(mapping) == list(range(10)) + [value, value]
+    assert mapping[-1] is mapping[-2] is value
+    mapping._check()
