@@ -309,6 +309,10 @@ class SegmentList(SortedKeyList):
         for value in values:
             self.append(value)
 
+    def __iadd__(self, values):
+        self.extend(list(values))
+        return self
+
     def insert(self, index, value):
         if index == self._len:
             self.append(value)
