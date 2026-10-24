@@ -1,5 +1,6 @@
 "Test sortedcollections.recipes"
 
+import copy
 import pickle
 
 import pytest
@@ -58,3 +59,51 @@ def test_segment_list_setitem_slice():
     sl = SegmentList()
     with pytest.raises(NotImplementedError):
         sl[:] = [0]
+
+
+@pytest.mark.parametrize('values', [[], [3, 1, 2], list(range(2500, -1, -1))])
+@pytest.mark.parametrize('copier', [lambda value: value.copy(), copy.copy])
+def test_segment_list_shallow_copy(values, copier):
+    original = SegmentList(values)
+    duplicate = copier(original)
+    assert isinstance(duplicate, SegmentList)
+    assert duplicate is not original
+    assert list(duplicate) == values
+    duplicate.append('new')
+    assert list(original) == values
+    duplicate._check()
+    original._check()
+
+
+@pytest.mark.parametrize('protocol', range(pickle.HIGHEST_PROTOCOL + 1))
+@pytest.mark.parametrize('values', [[], [3, 1, 2], list(range(2500, -1, -1))])
+def test_segment_list_pickle(values, protocol):
+    original = SegmentList(values)
+    duplicate = pickle.loads(pickle.dumps(original, protocol))
+    assert isinstance(duplicate, SegmentList)
+    assert duplicate is not original
+    assert list(duplicate) == values
+    duplicate.append('new')
+    duplicate[0] = 'changed'
+    del duplicate[-1]
+    assert list(original) == values
+    duplicate._check()
+    original._check()
+
+
+def test_segment_list_copy_preserves_element_sharing():
+    element = [1]
+    original = SegmentList([element, element])
+    shallow = copy.copy(original)
+    deep = copy.deepcopy(original)
+    assert shallow[0] is element
+    assert shallow[1] is element
+    assert deep[0] == element
+    assert deep[0] is not element
+    assert deep[0] is deep[1]
+    deep[0].append(2)
+    assert element == [1]
+    assert deep[1] == [1, 2]
+    deep._check()
+    shallow._check()
+    original._check()
