@@ -304,6 +304,8 @@ class SegmentList(SortedKeyList):
         self._len += 1
 
     def extend(self, values):
+        if values is self:
+            values = list(values)
         for value in values:
             self.append(value)
 
