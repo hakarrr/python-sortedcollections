@@ -179,9 +179,7 @@ class ValueSortedDict(SortedDict):
     __copy__ = copy
 
     def __reduce__(self):
-        items = [(key, self[key]) for key in self._list]
-        args = (self._func, items)
-        return (self.__class__, args)
+        return (self.__class__, (self._func,), None, None, iter(self.items()))
 
     @recursive_repr()
     def __repr__(self):
