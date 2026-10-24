@@ -75,10 +75,11 @@ class OrderedDict(dict):
 
     # pylint: disable=super-init-not-called
     def __init__(self, *args, **kwargs):
-        self._keys = {}
-        self._nums = SortedDict()
-        self._keys_view = self._nums.keys()
-        self._count = count()
+        if not hasattr(self, '_keys'):
+            self._keys = {}
+            self._nums = SortedDict()
+            self._keys_view = self._nums.keys()
+            self._count = count()
         self.update(*args, **kwargs)
 
     def __setitem__(self, key, value, dict_setitem=dict.__setitem__):
